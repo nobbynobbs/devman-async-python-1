@@ -3,7 +3,7 @@ import os
 import random
 
 from constants import TIC_TIMEOUT, BASE_DIR
-
+from curses_tools import read_controls
 
 async def sleep(seconds):
     for _ in range(int(seconds // TIC_TIMEOUT)):
@@ -26,3 +26,10 @@ def random_coordinates_list(canvas, min=50, max=100):
         (random.randint(1, height - 2), random.randint(1, width - 2))
         for _ in range(count)
     ]
+
+
+async def handle_inputs(ship, canvas):
+    while True:
+        row, column, _ = read_controls(canvas)  # non-blocking
+        ship.move(row, column, canvas)
+        await asyncio.sleep(0)

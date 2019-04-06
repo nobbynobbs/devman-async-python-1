@@ -11,7 +11,7 @@ from curses_tools import draw_frame, read_controls, get_frame_size
 
 from animations import blink, fire
 from constants import BASE_DIR, TIC_TIMEOUT, STARS
-from utils import sleep, read_frames, random_coordinates_list, canvas_center
+from utils import sleep, read_frames, random_coordinates_list, canvas_center, handle_inputs
 
 class Position:
     """point on screen"""
@@ -83,24 +83,23 @@ class Ship:
 
 
 def draw(canvas):
-    
     coroutines = [
         blink(canvas, row, column, random.choice(STARS))
         for row, column in random_coordinates_list(canvas)
     ]
-    
     fire_coro = fire(canvas, *canvas_center(canvas))
     coroutines.append(fire_coro)
     ship = Ship.factory(*canvas_center(canvas))
     coroutines.append(ship.render(canvas))
+    coroutines.append(handle_inputs(ship, canvas))
+    run_loop(coroutines, canvas)
 
+def run_loop(coroutines, canvas):
     finished_coroutines = set()
     while len(coroutines):
         for coro in coroutines:
             try:
                 coro.send(None)
-                row, column, _ = read_controls(canvas)  # non-blocking
-                ship.move(row, column, canvas)
             except StopIteration:
                 finished_coroutines.add(coro)
         canvas.refresh()

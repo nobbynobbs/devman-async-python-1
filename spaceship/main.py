@@ -9,7 +9,7 @@ import random
 
 from curses_tools import draw_frame, read_controls, get_frame_size
 
-from animations import blink
+from animations import blink, fire
 from constants import BASE_DIR, TIC_TIMEOUT, STARS
 from utils import sleep, read_frames, random_coordinates_list, canvas_center
 
@@ -89,6 +89,8 @@ def draw(canvas):
         for row, column in random_coordinates_list(canvas)
     ]
     
+    fire_coro = fire(canvas, *canvas_center(canvas))
+    coroutines.append(fire_coro)
     ship = Ship.factory(*canvas_center(canvas))
     coroutines.append(ship.render(canvas))
 
@@ -106,6 +108,7 @@ def draw(canvas):
             coroutines.remove(coro)
         finished_coroutines.clear()
         time.sleep(TIC_TIMEOUT)  # limit event-loop frequency
+        canvas.border()
 
 
 def main():

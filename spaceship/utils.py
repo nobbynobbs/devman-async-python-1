@@ -20,7 +20,7 @@ def read_frames():
 
 
 def random_coordinates_list(canvas, min=50, max=100):
-    count = random.randint(50, 100)
+    count = random.randint(min, max)
     height, width = canvas.getmaxyx()
     return [
         (random.randint(1, height - 2), random.randint(1, width - 2))

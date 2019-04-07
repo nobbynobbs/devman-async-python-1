@@ -25,8 +25,8 @@ def read_frames(frames_dir):
     return frames
 
 
-def get_random_coordinates_list(canvas, min=50, max=100):
-    count = random.randint(min, max)
+def get_random_coordinates_list(canvas, low=50, high=100):
+    count = random.randint(low, high)
     height, width = canvas.getmaxyx()
     return [
         (random.randint(1, height - 2), random.randint(1, width - 2))

@@ -111,8 +111,9 @@ def draw(canvas):
     run_loop(coroutines, canvas)
 
 def run_loop(coroutines, canvas):
-    finished_coroutines = set()
-    while len(coroutines):
+    while coroutines: 
+        # is it ok to allocate new set on each iteration?
+        finished_coroutines = set()
         for coro in coroutines:
             try:
                 coro.send(None)
@@ -121,7 +122,6 @@ def run_loop(coroutines, canvas):
         canvas.refresh()
         for coro in finished_coroutines:    
             coroutines.remove(coro)
-        finished_coroutines.clear()
         time.sleep(TIC_TIMEOUT)  # limit event-loop frequency
         canvas.border()
 

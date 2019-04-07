@@ -10,7 +10,7 @@ import random
 from curses_tools import draw_frame, read_controls, get_frame_size
 
 from animations import blink, fire
-from constants import BASE_DIR, TIC_TIMEOUT, STARS
+from constants import BASE_DIR, SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS
 from utils import sleep, read_frames, random_coordinates_list, canvas_center, handle_inputs
 
 class Position:
@@ -78,7 +78,7 @@ class Ship:
 
     @classmethod
     def factory(cls, row, col):
-        frames = read_frames()
+        frames = read_frames(SPACESHIP_FRAMES_DIR)
         return Ship(Position(row, col), frames)
 
 

@@ -14,10 +14,13 @@ def canvas_center(canvas):
     height, width = canvas.getmaxyx()
     return height // 2, width // 2
 
-def read_frames():
-    frames_dir = os.path.join(BASE_DIR, "frames")
-    return [open(os.path.join(frames_dir, f)).read() for f in os.listdir(frames_dir)]
-
+def read_frames(frames_dir):
+    frames = []
+    for filename in os.listdir(frames_dir):
+        with open(os.path.join(frames_dir, filename)) as fd:
+            frames.append(fd.read())
+    return frames
+    
 
 def random_coordinates_list(canvas, min=50, max=100):
     count = random.randint(min, max)

@@ -80,15 +80,15 @@ class Ship:
         return get_frame_size(self.current_frame)
 
     def can_move(self, canvas, row_direction, column_direction):
-        height, width = self.size
+        BORDER = 1
+        frame_height, frame_width = self.size 
         canvas_height, canvas_width = canvas.getmaxyx()
         return not any([
-            self.position.column < width // 2 and column_direction < 0,
-            self.position.row < height // 4 and row_direction < 0,
-            self.position.row + height > canvas_height - 2 and row_direction > 0,
-            self.position.column + width > canvas_width - 2 and column_direction > 0,
+            self.position.column <= BORDER and column_direction < 0,
+            self.position.row  <= BORDER and row_direction < 0,
+            self.position.row + frame_height >= canvas_height - BORDER and row_direction > 0,
+            self.position.column + frame_width >= canvas_width - BORDER and column_direction > 0,
         ])
-
 
     @classmethod
     def factory(cls, row, col):

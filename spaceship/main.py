@@ -11,8 +11,9 @@ from curses_tools import draw_frame, read_controls, get_frame_size
 
 from animations import blink, fire
 from constants import BASE_DIR, SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS
-from utils import sleep, read_frames, random_coordinates_list, canvas_center, handle_inputs
-
+from utils import (
+    sleep, read_frames, get_random_coordinates_list, get_canvas_center, handle_inputs
+)
 class Position:
     """point on screen"""
     def __init__(self, row, column):
@@ -25,6 +26,8 @@ class Position:
 
 
 class Ship:
+    ALLOWED_DIRECTIONS = {-1, 0, 1}
+
     """Spaceship"""
     def __init__(self, position, frames):
         self.position = position
@@ -42,6 +45,15 @@ class Ship:
             )
 
     def move(self, row_direction, column_direction, canvas):
+
+        if not all([
+            self._direction_value_is_alowed(row_direction),
+            self._direction_value_is_alowed(column_direction),
+        ]):
+            raise ValueError("Both direction values must be from set {}, ({}, {}) passed".format(
+                self.ALLOWED_DIRECTIONS, row_direction, column_direction
+            ))
+
         if row_direction == 0 and column_direction == 0:
             return
         if self.can_move(canvas, row_direction, column_direction):
@@ -56,6 +68,10 @@ class Ship:
             draw_frame(
                 canvas, self.position.row, self.position.column, self.current_frame
             )
+
+    @classmethod
+    def _direction_value_is_alowed(cls, direction):
+        return direction in cls.ALLOWED_DIRECTIONS
 
     @property
     def size(self):
@@ -85,11 +101,11 @@ class Ship:
 def draw(canvas):
     coroutines = [
         blink(canvas, row, column, random.choice(STARS), random.randint(0, 1))
-        for row, column in random_coordinates_list(canvas)
+        for row, column in get_random_coordinates_list(canvas)
     ]
-    fire_coro = fire(canvas, *canvas_center(canvas))
+    fire_coro = fire(canvas, *get_canvas_center(canvas))
     coroutines.append(fire_coro)
-    ship = Ship.factory(*canvas_center(canvas))
+    ship = Ship.factory(*get_canvas_center(canvas))
     coroutines.append(ship.render(canvas))
     coroutines.append(handle_inputs(ship, canvas))
     run_loop(coroutines, canvas)

@@ -5,14 +5,17 @@ import random
 from constants import TIC_TIMEOUT, BASE_DIR
 from curses_tools import read_controls
 
+
 async def sleep(seconds):
     for _ in range(int(seconds // TIC_TIMEOUT)):
         await asyncio.sleep(0)
 
-def canvas_center(canvas):
+
+def get_canvas_center(canvas):
     """return tuple `(row, column)`"""
     height, width = canvas.getmaxyx()
     return height // 2, width // 2
+
 
 def read_frames(frames_dir):
     frames = []
@@ -20,9 +23,9 @@ def read_frames(frames_dir):
         with open(os.path.join(frames_dir, filename)) as fd:
             frames.append(fd.read())
     return frames
-    
 
-def random_coordinates_list(canvas, min=50, max=100):
+
+def get_random_coordinates_list(canvas, min=50, max=100):
     count = random.randint(min, max)
     height, width = canvas.getmaxyx()
     return [

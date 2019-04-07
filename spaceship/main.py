@@ -82,15 +82,13 @@ class Ship:
     def can_move(self, canvas, row_direction, column_direction):
         height, width = self.size
         canvas_height, canvas_width = canvas.getmaxyx()
-        if self.position.column < width // 2 and column_direction < 0:
-            return False
-        if self.position.row < height // 4 and row_direction < 0:
-            return False
-        if self.position.row + height > canvas_height - 2 and row_direction > 0:
-            return False
-        if self.position.column + width > canvas_width - 2 and column_direction > 0:
-            return False
-        return True
+        return not any([
+            self.position.column < width // 2 and column_direction < 0,
+            self.position.row < height // 4 and row_direction < 0,
+            self.position.row + height > canvas_height - 2 and row_direction > 0,
+            self.position.column + width > canvas_width - 2 and column_direction > 0,
+        ])
+
 
     @classmethod
     def factory(cls, row, col):

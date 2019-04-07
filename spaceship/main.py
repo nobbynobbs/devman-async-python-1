@@ -84,7 +84,7 @@ class Ship:
 
 def draw(canvas):
     coroutines = [
-        blink(canvas, row, column, random.choice(STARS))
+        blink(canvas, row, column, random.choice(STARS), random.randint(0, 1))
         for row, column in random_coordinates_list(canvas)
     ]
     fire_coro = fire(canvas, *canvas_center(canvas))

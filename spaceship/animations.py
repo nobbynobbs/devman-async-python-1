@@ -1,8 +1,10 @@
+"""async animation functions"""
+
 import asyncio
 import curses
-import random
 
 from utils import sleep
+
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
     """Display animation of gun shot. Direction and speed can be specified."""
@@ -35,6 +37,7 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
 
 
 async def blink(canvas, row, column, symbol="*", delay=0):
+    """display twinkle twinkle little star"""
     await sleep(delay)
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)

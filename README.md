@@ -22,3 +22,7 @@ python3 spaceship/main.py
 
 - dataclasses в следующий раз, пока не поставил 3.7 на свежую систему
 - последний пункт пофиксился при исправлении третьего, я добавил проверку допустимых значений direction
+
+## Codestyle
+- black
+- pylint ./spaceship --disable=C0330

@@ -1,3 +1,6 @@
+"""predefined code"""
+
+
 SPACE_KEY_CODE = 32
 LEFT_KEY_CODE = 260
 RIGHT_KEY_CODE = 261
@@ -7,7 +10,7 @@ DOWN_KEY_CODE = 258
 
 def read_controls(canvas):
     """Read keys pressed and returns tuple witl controls state."""
-    
+
     rows_direction = columns_direction = 0
     space_pressed = False
 
@@ -32,13 +35,14 @@ def read_controls(canvas):
 
         if pressed_key_code == SPACE_KEY_CODE:
             space_pressed = True
-    
+
     return rows_direction, columns_direction, space_pressed
 
 
 def draw_frame(canvas, start_row, start_column, text, negative=False):
-    """Draw multiline text fragment on canvas. Erase text instead of drawing if negative=True is specified."""
-    
+    """Draw multiline text fragment on canvas.
+    Erase text instead of drawing if negative=True is specified."""
+
     rows_number, columns_number = canvas.getmaxyx()
 
     for row, line in enumerate(text.splitlines(), round(start_row)):
@@ -55,13 +59,13 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
             if column >= columns_number:
                 break
 
-            symbol = symbol if not negative else ' '
+            symbol = symbol if not negative else " "
             canvas.addch(row, column, symbol)
 
 
 def get_frame_size(text):
     """Calculate size of multiline text fragment. Returns pair (rows number, colums number)"""
-    
+
     lines = text.splitlines()
     rows = len(lines)
     columns = max([len(line) for line in lines])

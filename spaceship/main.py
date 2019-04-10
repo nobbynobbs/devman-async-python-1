@@ -2,6 +2,7 @@
 
 """event loop and entry point"""
 
+import asyncio
 import curses
 import itertools
 import os
@@ -12,6 +13,7 @@ from curses_tools import draw_frame, get_frame_size
 
 from animations import blink, fire, fly_garbage
 from constants import SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS, BASE_DIR
+from physics import update_speed
 from utils import (
     sleep,
     read_frames,
@@ -41,56 +43,66 @@ class Position:
 class Ship:
     """Define spaceship properties and behaviour"""
 
-    ALLOWED_DIRECTIONS = {-1, 0, 1}
-
-    def __init__(self, position, frames):
+    def __init__(self, position, frames, row_speed=0, column_speed=0):
         self.position = position
-        self.frames = frames
+        self.row_speed = row_speed
+        self.column_speed = column_speed
+        self.frames = itertools.cycle(frames)
         self.current_frame = None
+        self.previous_frame = None
 
-    async def render(self, canvas):
-        """async render"""
-        for frame in itertools.cycle(self.frames):
+
+    def update_speed(self, row_direction, column_direction):
+        self.row_speed, self.column_speed = update_speed(
+            self.row_speed, self.column_speed, row_direction, column_direction
+        )
+
+    async def animate(self):
+        for frame in self.frames:
             self.current_frame = frame
-            draw_frame(canvas, self.position.row, self.position.column, frame)
             await sleep(0.1)
-            draw_frame(
-                canvas, self.position.row, self.position.column, frame, negative=True
-            )
 
-    def move(self, row_direction, column_direction, canvas):
+    async def move(self, canvas, row_direction, column_direction):
         """change ship position"""
-        if not all(
-            [
-                self._direction_value_is_alowed(row_direction),
-                self._direction_value_is_alowed(column_direction),
-            ]
-        ):
-            raise ValueError(
-                "Both direction values must be from set {}, ({}, {}) passed".format(
-                    self.ALLOWED_DIRECTIONS, row_direction, column_direction
-                )
-            )
+        
+        border_width = 0
+        frame_height, frame_width = self.size
+        canvas_height, canvas_width = canvas.getmaxyx()
 
-        if row_direction == 0 and column_direction == 0:
-            return
-        if self.can_move(canvas, row_direction, column_direction):
-            draw_frame(
-                canvas,
-                self.position.row,
-                self.position.column,
-                self.current_frame,
-                negative=True,
-            )
-            self.position.move(row_direction, column_direction)
-            draw_frame(
-                canvas, self.position.row, self.position.column, self.current_frame
-            )
+        negative_frame = self.previous_frame or self.current_frame
 
-    @classmethod
-    def _direction_value_is_alowed(cls, direction):
-        """check if direction value is allowed"""
-        return direction in cls.ALLOWED_DIRECTIONS
+        draw_frame(
+            canvas, self.position.row, self.position.column, negative_frame, negative=True
+        )
+        self.update_speed(row_direction, column_direction)       
+
+        if self.position.column - self.column_speed <= border_width + 1 and column_direction <= 0:
+             self.position.column = border_width + 1
+             self.column_speed = 0
+                
+        if (self.position.column + frame_width + self.column_speed >= canvas_width - border_width
+                and column_direction >= 0):
+            self.position.column = canvas_width - frame_width - border_width - 1
+            self.column_speed = 0
+        
+        if self.position.row - self.row_speed <= border_width and row_direction <= 0:
+            self.position.row = border_width + 1
+            self.row_speed = 0
+
+        if (self.position.row + frame_height + self.row_speed >= canvas_height - border_width
+                and row_direction >= 0):
+            self.position.row = canvas_height - border_width - 1 - frame_height
+            self.row_speed = 0
+
+        self.position.column += self.column_speed
+        self.position.row += self.row_speed
+
+        draw_frame(
+            canvas, self.position.row, self.position.column, self.current_frame
+        )
+        self.previous_frame = self.current_frame
+        await sleep(0)
+
 
     @property
     def size(self):
@@ -99,21 +111,6 @@ class Ship:
             return 0, 0
         return get_frame_size(self.current_frame)
 
-    def can_move(self, canvas, row_direction, column_direction):
-        """check if ship reached the canvas border"""
-        border_width = 1
-        frame_height, frame_width = self.size
-        canvas_height, canvas_width = canvas.getmaxyx()
-        return not any(
-            [
-                self.position.column <= border_width and column_direction < 0,
-                self.position.row <= border_width and row_direction < 0,
-                self.position.row + frame_height >= canvas_height - border_width
-                and row_direction > 0,
-                self.position.column + frame_width >= canvas_width - border_width
-                and column_direction > 0,
-            ]
-        )
 
     @classmethod
     def factory(cls, row, col):
@@ -129,8 +126,8 @@ async def fill_orbit_with_garbage(coroutines, canvas):
     while True:
         await sleep(random.random() * 2)  # sleep [0, 2] seconds
         frame = random.choice(frames)
-        frame_width, _ = get_frame_size(frame)
-        column = random.randint(1, canvas_width - frame_width - 2)
+        _, frame_width = get_frame_size(frame)
+        column = random.randint(1, canvas_width - frame_width - 1)
         coroutines.append(fly_garbage(canvas, column, frame, .2))
 
 
@@ -143,7 +140,7 @@ def draw(canvas):
     fire_coro = fire(canvas, *get_canvas_center(canvas))
     coroutines.append(fire_coro)
     ship = Ship.factory(*get_canvas_center(canvas))
-    coroutines.append(ship.render(canvas))
+    coroutines.append(ship.animate())
     coroutines.append(handle_inputs(ship, canvas))
     coroutines.append(fill_orbit_with_garbage(coroutines, canvas))
     run_loop(coroutines, canvas)

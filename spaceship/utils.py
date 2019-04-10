@@ -7,10 +7,9 @@ import random
 from constants import TIC_TIMEOUT
 from curses_tools import read_controls
 
-
 async def sleep(seconds):
     """asyncio.sleep(0) wrapper"""
-    for _ in range(int(seconds // TIC_TIMEOUT)):
+    for _ in range(int(seconds // TIC_TIMEOUT) or 1):
         await asyncio.sleep(0)
 
 
@@ -43,5 +42,5 @@ async def handle_inputs(ship, canvas):
     """async wrapper for controls handler"""
     while True:
         row, column, _ = read_controls(canvas)  # non-blocking
-        ship.move(row, column, canvas)
-        await asyncio.sleep(0)
+        await ship.move(canvas, row, column)
+

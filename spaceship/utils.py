@@ -38,9 +38,10 @@ def get_random_coordinates_list(canvas, low=50, high=100):
     ]
 
 
-async def handle_inputs(ship, canvas):
+async def handle_inputs(ship, canvas, coroutines):
     """async wrapper for controls handler"""
     while True:
-        row, column, _ = read_controls(canvas)  # non-blocking
+        row, column, shoot = read_controls(canvas)  # non-blocking
         await ship.move(canvas, row, column)
-
+        if shoot:
+            ship.shoot(canvas, coroutines)

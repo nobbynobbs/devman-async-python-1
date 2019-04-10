@@ -103,6 +103,9 @@ class Ship:
         self.previous_frame = self.current_frame
         await sleep(0)
 
+    def shoot(self, canvas, coroutines):
+        _, ship_width = self.size
+        coroutines.append(fire(canvas, self.position.row, self.position.column + ship_width // 2))
 
     @property
     def size(self):
@@ -137,11 +140,9 @@ def draw(canvas):
         blink(canvas, row, column, random.choice(STARS), random.randint(0, 1))
         for row, column in get_random_coordinates_list(canvas)
     ]
-    fire_coro = fire(canvas, *get_canvas_center(canvas))
-    coroutines.append(fire_coro)
     ship = Ship.factory(*get_canvas_center(canvas))
     coroutines.append(ship.animate())
-    coroutines.append(handle_inputs(ship, canvas))
+    coroutines.append(handle_inputs(ship, canvas, coroutines))
     coroutines.append(fill_orbit_with_garbage(coroutines, canvas))
     run_loop(coroutines, canvas)
 

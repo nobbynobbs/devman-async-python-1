@@ -4,13 +4,14 @@
 
 import curses
 import itertools
+import os
 import time
 import random
 
 from curses_tools import draw_frame, get_frame_size
 
-from animations import blink, fire
-from constants import SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS
+from animations import blink, fire, fly_garbage
+from constants import SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS, BASE_DIR
 from utils import (
     sleep,
     read_frames,
@@ -121,6 +122,18 @@ class Ship:
         return Ship(Position(row, col), frames)
 
 
+async def fill_orbit_with_garbage(coroutines, canvas):
+    """generates infinite garbage frames"""
+    frames = read_frames(os.path.join(BASE_DIR, 'frames/garbage'))
+    _, canvas_width = canvas.getmaxyx()
+    while True:
+        await sleep(random.random() * 2)  # sleep [0, 2] seconds
+        frame = random.choice(frames)
+        frame_width, _ = get_frame_size(frame)
+        column = random.randint(1, canvas_width - frame_width - 2)
+        coroutines.append(fly_garbage(canvas, column, frame, .2))
+
+
 def draw(canvas):
     """create anumations coroutines and run event loop"""
     coroutines = [
@@ -132,6 +145,7 @@ def draw(canvas):
     ship = Ship.factory(*get_canvas_center(canvas))
     coroutines.append(ship.render(canvas))
     coroutines.append(handle_inputs(ship, canvas))
+    coroutines.append(fill_orbit_with_garbage(coroutines, canvas))
     run_loop(coroutines, canvas)
 
 

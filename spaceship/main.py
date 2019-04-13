@@ -7,16 +7,15 @@ import curses
 import itertools
 import logging
 import os
-import time
 import random
 import uuid
 
-from animations import blink, fire, fly_garbage
+import core.loop as loop
+from animations import blink, fire, fly_garbage, explode as animate_explosion
 from constants import (
-    SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS, BASE_DIR, LOG_LEVEL, DEBUG
+    SPACESHIP_FRAMES_DIR, STARS, BASE_DIR, LOG_LEVEL, DEBUG
 )
 from curses_tools import draw_frame, get_frame_size
-from explosion import explode as animate_explosion
 from state import coroutines, obstacles
 from obstacles import Obstacle, show_obstacles
 from physics import update_speed
@@ -135,7 +134,9 @@ class Ship:
         negative_frame = self.previous_frame or self.current_frame
         height, width = self.size
         draw_frame(canvas, self.row, self.column, negative_frame, negative=True)
-        await animate_explosion(canvas, self.row + height // 2, self.column + width // 2)
+        await animate_explosion(
+            canvas, self.row + height // 2, self.column + width // 2
+        )
 
     def shoot(self, canvas):
         _, ship_width = self.size
@@ -179,24 +180,7 @@ def draw(canvas):
     coroutines.append(handle_inputs(canvas, ship))
     coroutines.append(check_collision(canvas, ship))
     coroutines.append(fill_orbit_with_garbage(canvas))
-    run_loop(canvas)
-
-
-def run_loop(canvas):
-    """invoke coroutines, collect exhausted coroutines"""
-    while coroutines:
-        # is it ok to allocate new set on each iteration?
-        finished_coroutines = set()
-        for coro in coroutines:
-            try:
-                coro.send(None)
-            except StopIteration:
-                finished_coroutines.add(coro)
-        canvas.refresh()
-        for coro in finished_coroutines:
-            coroutines.remove(coro)
-        time.sleep(TIC_TIMEOUT)  # limit event-loop frequency
-        canvas.border()
+    loop.run(canvas, coroutines)
 
 
 def main():

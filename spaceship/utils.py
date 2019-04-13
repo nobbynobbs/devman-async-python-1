@@ -60,6 +60,7 @@ async def check_collision(canvas, ship):
                 return
         await sleep(0)
 
+
 def rand(left, right):
     """random number from interval [left, right]"""
     return left + (random.random() * (right - left))

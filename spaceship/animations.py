@@ -4,6 +4,7 @@ import asyncio
 import curses
 
 from curses_tools import draw_frame
+from state import obstacles
 from utils import sleep
 
 
@@ -67,3 +68,5 @@ async def fly_garbage(canvas, obstacle, garbage_frame, speed=0.5):
         await asyncio.sleep(0)
         draw_frame(canvas, obstacle.row, column, garbage_frame, negative=True)
         obstacle.row += speed
+    
+    obstacles.remove(obstacle)

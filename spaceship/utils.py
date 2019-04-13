@@ -46,3 +46,8 @@ async def handle_inputs(ship, canvas):
         await ship.move(canvas, row, column)
         if shoot:
             ship.shoot(canvas)
+
+
+def rand(left, right):
+    """random number from interval [left, right]"""
+    return left + (random.random() * (right - left))

@@ -4,7 +4,7 @@ import dataclasses
 import itertools
 import logging
 
-from constants import SPACESHIP_FRAMES
+from core.constants import SPACESHIP_FRAMES
 from curses_tools import get_frame_size, draw_frame
 from core.loop import sleep
 from core.physics import update_speed

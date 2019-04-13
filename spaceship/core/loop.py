@@ -3,13 +3,12 @@
 import asyncio
 import time
 
-from constants import TIC_TIMEOUT
+from .constants import TIC_TIMEOUT
 
 
 def run(canvas, coroutines):
     """invoke coroutines, collect exhausted coroutines"""
     while coroutines:
-        # is it ok to allocate new set on each iteration?
         finished_coroutines = set()
         for coro in coroutines:
             try:

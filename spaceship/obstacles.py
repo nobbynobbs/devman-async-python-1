@@ -1,8 +1,17 @@
-"""obstacle class and animations"""
+"""obstacle class, animations and factory"""
 
 import asyncio
-from curses_tools import draw_frame
+import logging
+import random
+import uuid
 
+from animations import explode
+from core import loop
+from core.constants import OBSTACLES_FRAMES
+from curses_tools import draw_frame, get_frame_size
+from settings import DEBUG, MIN_OBSTACLES_SPEED, MAX_OBSTACLES_SPEED
+from state import obstacles, coroutines
+from utils import rand
 
 class Obstacle:
     """cosmic garbage"""
@@ -42,16 +51,35 @@ class Obstacle:
             (obj_size_rows, obj_size_columns),
         )
 
+    async def fly(self, canvas, garbage_frame, speed=0.5):
+        """Animate garbage, flying from top to bottom.
+        Сolumn position will stay same, as specified on start."""
+        rows_number, columns_number = canvas.getmaxyx()
+
+        column = max(self.column, 0)
+        column = min(column, columns_number - 1)
+
+        while self.row < rows_number:
+            draw_frame(canvas, self.row, column, garbage_frame)
+            await asyncio.sleep(0)
+            draw_frame(canvas, self.row, column, garbage_frame, negative=True)
+            if self.destroyed:
+                obstacles.remove(self)
+                await explode(canvas, *self.center)
+                return
+            self.row += speed
+        obstacles.remove(self)
+
 
 def _get_bounding_box_lines(rows, columns):
-
+    """yield bounding box line by line"""
     yield " " + "-" * columns + " "
     for _ in range(rows):
         yield "|" + " " * columns + "|"
     yield " " + "-" * columns + " "
 
 
-async def show_obstacles(canvas, obstacles):
+async def show_obstacles(canvas):
     """Display bounding boxes of every obstacle in a list"""
 
     while True:
@@ -99,3 +127,24 @@ def has_collision(obstacle_corner, obstacle_size, obj_corner, obj_size=(1, 1)):
             _is_point_inside(*obj_corner, *obj_size, *opposite_obstacle_corner),
         ]
     )
+
+
+async def fill_space_with_obstacles(canvas):
+    """generates infinite obstacles flow"""
+    _, canvas_width = canvas.getmaxyx()
+    if DEBUG:
+        coroutines.append(show_obstacles(canvas))
+    while True:
+        await loop.sleep(random.random() * 2)  # sleep [0, 2] seconds
+        frame = random.choice(OBSTACLES_FRAMES)
+        frame_height, frame_width = get_frame_size(frame)
+        column = random.randint(1, canvas_width - frame_width - 1)
+        obstacle = Obstacle(0, column, frame_height, frame_width, uid=uuid.uuid4())
+        obstacles.append(obstacle)
+        coroutines.append(obstacle.fly(canvas, frame, _get_random_speed()))
+        logging.debug("Obstacles count: %d", len(obstacles))
+
+
+def _get_random_speed():
+    """return random speed for obstacle"""
+    return rand(MIN_OBSTACLES_SPEED, MAX_OBSTACLES_SPEED)

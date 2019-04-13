@@ -6,39 +6,19 @@ import curses
 import logging
 import os
 import random
-import uuid
 
+from animations import blink
 import core.loop as loop
-from animations import blink, fly_garbage
-from constants import (
-    STARS, BASE_DIR, LOG_LEVEL, DEBUG, OBSTACLES_FRAMES
-)
-from curses_tools import get_frame_size
-from state import coroutines, obstacles
-from obstacles import Obstacle, show_obstacles
+from core.constants import STARS, BASE_DIR
+from settings import LOG_LEVEL
+from state import coroutines
+from obstacles import fill_space_with_obstacles
 from ship import Ship
 from utils import (
     get_random_coordinates_list,
     get_canvas_center,
     handle_inputs,
-    rand,
 )
-
-
-async def fill_orbit_with_garbage(canvas):
-    """generates infinite garbage frames"""
-    _, canvas_width = canvas.getmaxyx()
-    if DEBUG:
-        coroutines.append(show_obstacles(canvas, obstacles))
-    while True:
-        await loop.sleep(random.random() * 2)  # sleep [0, 2] seconds
-        frame = random.choice(OBSTACLES_FRAMES)
-        frame_height, frame_width = get_frame_size(frame)
-        column = random.randint(1, canvas_width - frame_width - 1)
-        obstacle = Obstacle(0, column, frame_height, frame_width, uid=uuid.uuid4())
-        obstacles.append(obstacle)
-        coroutines.append(fly_garbage(canvas, obstacle, frame, rand(.05, .1)))
-        logging.debug("Obstacles count: %d", len(obstacles))
 
 
 def draw(canvas):
@@ -51,7 +31,7 @@ def draw(canvas):
     coroutines.append(ship.animate())
     coroutines.append(handle_inputs(canvas, ship))
     coroutines.append(ship.check_collision(canvas))
-    coroutines.append(fill_orbit_with_garbage(canvas))
+    coroutines.append(fill_space_with_obstacles(canvas))
     loop.run(canvas, coroutines)
 
 

@@ -3,10 +3,10 @@
 import asyncio
 import curses
 
-from constants import EXPLOSION_FRAMES
+from core.constants import EXPLOSION_FRAMES
+from core.loop import sleep
 from curses_tools import draw_frame, get_frame_size
 from state import obstacles
-from core.loop import sleep
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
@@ -58,26 +58,6 @@ async def blink(canvas, row, column, symbol="*", delay=0):
 
         canvas.addstr(row, column, symbol)
         await sleep(0.3)
-
-
-async def fly_garbage(canvas, obstacle, garbage_frame, speed=0.5):
-    """Animate garbage, flying from top to bottom.
-    Сolumn position will stay same, as specified on start."""
-    rows_number, columns_number = canvas.getmaxyx()
-
-    column = max(obstacle.column, 0)
-    column = min(column, columns_number - 1)
-
-    while obstacle.row < rows_number:
-        draw_frame(canvas, obstacle.row, column, garbage_frame)
-        await asyncio.sleep(0)
-        draw_frame(canvas, obstacle.row, column, garbage_frame, negative=True)
-        if obstacle.destroyed:
-            obstacles.remove(obstacle)
-            await explode(canvas, *obstacle.center)
-            return
-        obstacle.row += speed
-    obstacles.remove(obstacle)
 
 
 async def explode(canvas, center_row, center_column):

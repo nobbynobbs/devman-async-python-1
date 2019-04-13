@@ -5,6 +5,7 @@ from curses_tools import draw_frame
 
 
 class Obstacle:
+    """cosmic garbage"""
     def __init__(self, row, column, rows_size=1, columns_size=1, uid=None):
         self.row = row
         self.column = column
@@ -13,8 +14,13 @@ class Obstacle:
         self.uid = uid
         self.destroyed = False
 
+    @property
+    def center(self):
+        """coordinates of center"""
+        return self.row + self.rows_size // 2, self.column + self.columns_size // 2
+
     def get_bounding_box_frame(self):
-        # increment box size to compensate obstacle movement
+        """increment box size to compensate obstacle movement"""
         rows, columns = self.rows_size + 1, self.columns_size + 1
         return "\n".join(_get_bounding_box_lines(rows, columns))
 

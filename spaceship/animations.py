@@ -4,6 +4,7 @@ import asyncio
 import curses
 
 from curses_tools import draw_frame
+from explosion import explode
 from state import obstacles
 from utils import sleep
 
@@ -73,8 +74,7 @@ async def fly_garbage(canvas, obstacle, garbage_frame, speed=0.5):
         draw_frame(canvas, obstacle.row, column, garbage_frame, negative=True)
         if obstacle.destroyed:
             obstacles.remove(obstacle)
-            # TODO destroyed obstacle burst
+            await explode(canvas, *obstacle.center)
             return
-        else:
-            obstacle.row += speed
+        obstacle.row += speed
     obstacles.remove(obstacle)

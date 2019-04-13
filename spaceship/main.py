@@ -3,16 +3,17 @@
 """event loop and entry point"""
 
 import asyncio
+import dataclasses
 import curses
 import itertools
 import os
 import time
 import random
 
-from curses_tools import draw_frame, get_frame_size
-
 from animations import blink, fire, fly_garbage
 from constants import SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS, BASE_DIR
+from curses_tools import draw_frame, get_frame_size
+from state import coroutines
 from physics import update_speed
 from utils import (
     sleep,
@@ -23,12 +24,11 @@ from utils import (
 )
 
 
+@dataclasses.dataclass
 class Position:
     """point on screen"""
-
-    def __init__(self, row, column):
-        self.row = row
-        self.column = column
+    row: float
+    column: float
 
     def move(self, row_direction, column_direction):
         """shift position"""
@@ -103,7 +103,7 @@ class Ship:
         self.previous_frame = self.current_frame
         await sleep(0)
 
-    def shoot(self, canvas, coroutines):
+    def shoot(self, canvas):
         _, ship_width = self.size
         coroutines.append(fire(canvas, self.position.row, self.position.column + ship_width // 2))
 
@@ -122,7 +122,7 @@ class Ship:
         return Ship(Position(row, col), frames)
 
 
-async def fill_orbit_with_garbage(coroutines, canvas):
+async def fill_orbit_with_garbage(canvas):
     """generates infinite garbage frames"""
     frames = read_frames(os.path.join(BASE_DIR, 'frames/garbage'))
     _, canvas_width = canvas.getmaxyx()
@@ -136,18 +136,19 @@ async def fill_orbit_with_garbage(coroutines, canvas):
 
 def draw(canvas):
     """create anumations coroutines and run event loop"""
-    coroutines = [
+    global coroutines
+    coroutines += [
         blink(canvas, row, column, random.choice(STARS), random.randint(0, 1))
         for row, column in get_random_coordinates_list(canvas)
     ]
     ship = Ship.factory(*get_canvas_center(canvas))
     coroutines.append(ship.animate())
-    coroutines.append(handle_inputs(ship, canvas, coroutines))
-    coroutines.append(fill_orbit_with_garbage(coroutines, canvas))
-    run_loop(coroutines, canvas)
+    coroutines.append(handle_inputs(ship, canvas))
+    coroutines.append(fill_orbit_with_garbage(canvas))
+    run_loop(canvas)
 
 
-def run_loop(coroutines, canvas):
+def run_loop(canvas):
     """invoke coroutines, collect exhausted coroutines"""
     while coroutines:
         # is it ok to allocate new set on each iteration?

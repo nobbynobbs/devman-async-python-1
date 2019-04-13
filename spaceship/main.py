@@ -16,10 +16,12 @@ from constants import (
     SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS, BASE_DIR, LOG_LEVEL, DEBUG
 )
 from curses_tools import draw_frame, get_frame_size
+from explosion import explode as animate_explosion
 from state import coroutines, obstacles
 from obstacles import Obstacle, show_obstacles
 from physics import update_speed
 from utils import (
+    check_collision,
     sleep,
     read_frames,
     get_random_coordinates_list,
@@ -56,6 +58,22 @@ class Ship:
         self.frames = itertools.cycle(frames)
         self.current_frame = None
         self.previous_frame = None
+        self.destroyed = False
+
+    @property
+    def row(self):
+        return self.position.row
+
+    @property
+    def column(self):
+        return self.position.column
+
+    @property
+    def size(self):
+        """return size of rendered frame"""
+        if self.current_frame is None:
+            return 0, 0
+        return get_frame_size(self.current_frame)
 
     def update_speed(self, row_direction, column_direction):
         self.row_speed, self.column_speed = update_speed(
@@ -76,13 +94,7 @@ class Ship:
 
         negative_frame = self.previous_frame or self.current_frame
 
-        draw_frame(
-            canvas,
-            self.position.row,
-            self.position.column,
-            negative_frame,
-            negative=True,
-        )
+        draw_frame(canvas, self.row, self.column, negative_frame, negative=True)
         self.update_speed(row_direction, column_direction)
 
         if (
@@ -119,18 +131,17 @@ class Ship:
         self.previous_frame = self.current_frame
         await sleep(0)
 
+    async def explode(self, canvas):
+        negative_frame = self.previous_frame or self.current_frame
+        height, width = self.size
+        draw_frame(canvas, self.row, self.column, negative_frame, negative=True)
+        await animate_explosion(canvas, self.row + height // 2, self.column + width // 2)
+
     def shoot(self, canvas):
         _, ship_width = self.size
         coroutines.append(
             fire(canvas, self.position.row, self.position.column + ship_width // 2)
         )
-
-    @property
-    def size(self):
-        """return size of rendered frame"""
-        if self.current_frame is None:
-            return 0, 0
-        return get_frame_size(self.current_frame)
 
     @classmethod
     def factory(cls, row, col):
@@ -152,7 +163,7 @@ async def fill_orbit_with_garbage(canvas):
         column = random.randint(1, canvas_width - frame_width - 1)
         obstacle = Obstacle(0, column, frame_height, frame_width, uid=uuid.uuid4())
         obstacles.append(obstacle)
-        coroutines.append(fly_garbage(canvas, obstacle, frame, rand(.1, .3)))
+        coroutines.append(fly_garbage(canvas, obstacle, frame, rand(.05, .1)))
         logging.debug("Obstacles count: %d", len(obstacles))
 
 
@@ -165,7 +176,8 @@ def draw(canvas):
     ]
     ship = Ship.factory(*get_canvas_center(canvas))
     coroutines.append(ship.animate())
-    coroutines.append(handle_inputs(ship, canvas))
+    coroutines.append(handle_inputs(canvas, ship))
+    coroutines.append(check_collision(canvas, ship))
     coroutines.append(fill_orbit_with_garbage(canvas))
     run_loop(canvas)
 

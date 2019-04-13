@@ -1,11 +1,13 @@
 """utils and helpers"""
 
 import asyncio
+import logging
 import os
 import random
 
 from constants import TIC_TIMEOUT
 from curses_tools import read_controls
+from state import obstacles
 
 
 async def sleep(seconds):
@@ -39,14 +41,24 @@ def get_random_coordinates_list(canvas, low=50, high=100):
     ]
 
 
-async def handle_inputs(ship, canvas):
+async def handle_inputs(canvas, ship):
     """async wrapper for controls handler"""
-    while True:
+    while not ship.destroyed:
         row, column, shoot = read_controls(canvas)  # non-blocking
         await ship.move(canvas, row, column)
         if shoot:
             ship.shoot(canvas)
 
+
+async def check_collision(canvas, ship):
+    while True:
+        for obstacle in obstacles:
+            if obstacle.has_collision(ship.row, ship.column, *ship.size):
+                logging.debug("Ship must be destroyed")
+                ship.destroyed = True
+                await ship.explode(canvas)
+                return
+        await sleep(0)
 
 def rand(left, right):
     """random number from interval [left, right]"""

@@ -1,5 +1,6 @@
 """naive event loop implementation"""
 
+import asyncio
 import time
 
 from constants import TIC_TIMEOUT
@@ -20,3 +21,9 @@ def run(canvas, coroutines):
             coroutines.remove(coro)
         time.sleep(TIC_TIMEOUT)  # limit event-loop frequency
         canvas.border()
+
+
+async def sleep(seconds):
+    """asyncio.sleep(0) wrapper"""
+    for _ in range(int(seconds // TIC_TIMEOUT) or 1):
+        await asyncio.sleep(0)

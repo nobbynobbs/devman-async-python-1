@@ -1,19 +1,9 @@
 """utils and helpers"""
 
-import asyncio
-import logging
 import os
 import random
 
-from constants import TIC_TIMEOUT
 from curses_tools import read_controls
-from state import obstacles
-
-
-async def sleep(seconds):
-    """asyncio.sleep(0) wrapper"""
-    for _ in range(int(seconds // TIC_TIMEOUT) or 1):
-        await asyncio.sleep(0)
 
 
 def get_canvas_center(canvas):
@@ -48,17 +38,6 @@ async def handle_inputs(canvas, ship):
         await ship.move(canvas, row, column)
         if shoot:
             ship.shoot(canvas)
-
-
-async def check_collision(canvas, ship):
-    while True:
-        for obstacle in obstacles:
-            if obstacle.has_collision(ship.row, ship.column, *ship.size):
-                logging.debug("Ship must be destroyed")
-                ship.destroyed = True
-                await ship.explode(canvas)
-                return
-        await sleep(0)
 
 
 def rand(left, right):

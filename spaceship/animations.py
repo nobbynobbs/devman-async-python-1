@@ -2,14 +2,11 @@
 
 import asyncio
 import curses
-import os
 
-from constants import BASE_DIR
+from constants import EXPLOSION_FRAMES
 from curses_tools import draw_frame, get_frame_size
 from state import obstacles
-from utils import sleep, read_frames
-
-EXPLOSION_FRAMES = read_frames(os.path.join(BASE_DIR, "frames", "explosion"))
+from core.loop import sleep
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
@@ -84,6 +81,7 @@ async def fly_garbage(canvas, obstacle, garbage_frame, speed=0.5):
 
 
 async def explode(canvas, center_row, center_column):
+    """exlplosion animation"""
     rows, columns = get_frame_size(EXPLOSION_FRAMES[0])
     corner_row = center_row - rows / 2
     corner_column = center_column - columns / 2

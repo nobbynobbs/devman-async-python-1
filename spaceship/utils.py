@@ -7,6 +7,7 @@ import random
 from constants import TIC_TIMEOUT
 from curses_tools import read_controls
 
+
 async def sleep(seconds):
     """asyncio.sleep(0) wrapper"""
     for _ in range(int(seconds // TIC_TIMEOUT) or 1):

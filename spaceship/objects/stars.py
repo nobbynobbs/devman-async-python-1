@@ -7,6 +7,7 @@ from core.constants import STARS
 from core.loop import sleep
 from utils import get_random_coordinates_list, rand
 
+
 def get_stars_coroutines(canvas):
     """return list of blinking coroutines"""
     return [

@@ -13,8 +13,10 @@ from settings import DEBUG, MIN_OBSTACLES_SPEED, MAX_OBSTACLES_SPEED
 from state import obstacles, coroutines
 from utils import rand
 
+
 class Obstacle:
     """cosmic garbage"""
+
     def __init__(self, row, column, rows_size=1, columns_size=1, uid=None):
         self.row = row
         self.column = column

@@ -5,28 +5,21 @@
 import curses
 import logging
 import os
-import random
 
-from animations import blink
 import core.loop as loop
-from core.constants import STARS, BASE_DIR
+from core.constants import BASE_DIR
+from curses_tools import get_canvas_center
 from settings import LOG_LEVEL
 from state import coroutines
-from obstacles import fill_space_with_obstacles
-from ship import Ship
-from utils import (
-    get_random_coordinates_list,
-    get_canvas_center,
-    handle_inputs,
-)
+from objects.stars import get_stars_coroutines
+from objects.obstacles import fill_space_with_obstacles
+from objects.ship import Ship
+from utils import handle_inputs
 
 
 def draw(canvas):
     """create anumations coroutines and run event loop"""
-    coroutines.extend([
-        blink(canvas, row, column, random.choice(STARS), random.randint(0, 1))
-        for row, column in get_random_coordinates_list(canvas)
-    ])
+    coroutines.extend(get_stars_coroutines(canvas))
     ship = Ship.factory(*get_canvas_center(canvas))
     coroutines.append(ship.animate())
     coroutines.append(handle_inputs(canvas, ship))

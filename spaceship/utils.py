@@ -6,12 +6,6 @@ import random
 from curses_tools import read_controls
 
 
-def get_canvas_center(canvas):
-    """return tuple `(row, column)`"""
-    height, width = canvas.getmaxyx()
-    return height // 2, width // 2
-
-
 def read_frames(frames_dir):
     """read all frame files from directory into list of strings"""
     frames = []

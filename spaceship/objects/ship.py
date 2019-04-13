@@ -4,11 +4,11 @@ import dataclasses
 import itertools
 import logging
 
+from core.animations import explode as animate_explosion, fire
 from core.constants import SPACESHIP_FRAMES
-from curses_tools import get_frame_size, draw_frame
 from core.loop import sleep
 from core.physics import update_speed
-from animations import explode as animate_explosion, fire
+from curses_tools import get_frame_size, draw_frame
 from state import coroutines, obstacles
 
 
@@ -43,10 +43,12 @@ class Ship:
 
     @property
     def row(self):
+        """row getter"""
         return self.position.row
 
     @property
     def column(self):
+        """column getter"""
         return self.position.column
 
     @property
@@ -57,11 +59,13 @@ class Ship:
         return get_frame_size(self.current_frame)
 
     def update_speed(self, row_direction, column_direction):
+        """update ship speed"""
         self.row_speed, self.column_speed = update_speed(
             self.row_speed, self.column_speed, row_direction, column_direction
         )
 
     async def animate(self):
+        """toggle frames"""
         for frame in self.frames:
             self.current_frame = frame
             await sleep(0.1)
@@ -113,6 +117,7 @@ class Ship:
         await sleep(0)
 
     async def explode(self, canvas):
+        """animete ship destroying"""
         negative_frame = self.previous_frame or self.current_frame
         height, width = self.size
         draw_frame(canvas, self.row, self.column, negative_frame, negative=True)
@@ -121,6 +126,7 @@ class Ship:
         )
 
     def shoot(self, canvas):
+        """create lasergun shot"""
         _, ship_width = self.size
         coroutines.append(
             fire(canvas, self.position.row, self.position.column + ship_width // 2)
@@ -132,6 +138,7 @@ class Ship:
         return Ship(Position(row, col), SPACESHIP_FRAMES)
 
     async def check_collision(self, canvas):
+        """mark ship as destroyed if there is collision with obstacles"""
         while True:
             for obstacle in obstacles:
                 if obstacle.has_collision(self.row, self.column, *self.size):

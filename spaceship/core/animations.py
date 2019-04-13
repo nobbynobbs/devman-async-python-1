@@ -1,10 +1,9 @@
-"""async animation functions"""
+"""common (reusable) async animation functions"""
 
 import asyncio
 import curses
 
 from core.constants import EXPLOSION_FRAMES
-from core.loop import sleep
 from curses_tools import draw_frame, get_frame_size
 from state import obstacles
 
@@ -41,23 +40,6 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
                 return
         row += rows_speed
         column += columns_speed
-
-
-async def blink(canvas, row, column, symbol="*", delay=0):
-    """display twinkle twinkle little star"""
-    await sleep(delay)
-    while True:
-        canvas.addstr(row, column, symbol, curses.A_DIM)
-        await sleep(2)
-
-        canvas.addstr(row, column, symbol)
-        await sleep(0.3)
-
-        canvas.addstr(row, column, symbol, curses.A_BOLD)
-        await sleep(0.5)
-
-        canvas.addstr(row, column, symbol)
-        await sleep(0.3)
 
 
 async def explode(canvas, center_row, center_column):

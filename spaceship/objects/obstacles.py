@@ -5,7 +5,7 @@ import logging
 import random
 import uuid
 
-from animations import explode
+from core.animations import explode
 from core import loop
 from core.constants import OBSTACLES_FRAMES
 from curses_tools import draw_frame, get_frame_size

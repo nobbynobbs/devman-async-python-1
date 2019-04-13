@@ -8,6 +8,12 @@ UP_KEY_CODE = 259
 DOWN_KEY_CODE = 258
 
 
+def get_canvas_center(canvas):
+    """return tuple `(row, column)`"""
+    height, width = canvas.getmaxyx()
+    return height // 2, width // 2
+
+
 def read_controls(canvas):
     """Read keys pressed and returns tuple witl controls state."""
 

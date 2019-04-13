@@ -1,4 +1,4 @@
-"""contains global variables for application state"""
+"""global variables for application state"""
 
 # pylint: disable=C0103
 

@@ -41,6 +41,11 @@ class Ship:
         self.previous_frame = None
         self.destroyed = False
 
+    def start(self, canvas):
+        """add infinite ship's coroutines into event loop"""
+        coroutines.append(self.animate())
+        coroutines.append(self.check_collision(canvas))
+
     @property
     def row(self):
         """row getter"""

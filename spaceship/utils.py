@@ -1,10 +1,11 @@
 """utils and helpers"""
 
+import asyncio
 import os
 import random
 
 from curses_tools import read_controls
-
+from state import obstacles
 
 def read_frames(frames_dir):
     """read all frame files from directory into list of strings"""
@@ -27,12 +28,19 @@ def get_random_coordinates_list(canvas, low=50, high=100):
 
 async def handle_inputs(canvas, ship):
     """async wrapper for controls handler"""
-    while not ship.destroyed:
+    while True:
         row, column, shoot = read_controls(canvas)  # non-blocking
-        await ship.move(canvas, row, column)
-        if shoot:
-            ship.shoot(canvas)
-
+        if not ship.destroyed:
+            await ship.move(canvas, row, column)
+            if shoot:
+                ship.shoot(canvas)
+        else:
+            if shoot:
+                for obstacle in obstacles:
+                    obstacle.destroyed = True
+                    ship.destroyed = False
+                    ship.start(canvas)
+            await asyncio.sleep(0)
 
 def rand(left, right):
     """random number from interval [left, right]"""

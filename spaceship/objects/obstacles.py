@@ -34,9 +34,11 @@ class Obstacle:
         return "\n".join(_get_bounding_box_lines(rows, columns))
 
     def get_bounding_box_corner_pos(self):
+        """top left corner"""
         return self.row - 1, self.column - 1
 
     def dump_bounding_box(self):
+        """left top corner and bbox frame itself"""
         row, column = self.get_bounding_box_corner_pos()
         return row, column, self.get_bounding_box_frame()
 

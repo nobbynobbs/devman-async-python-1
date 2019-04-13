@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-"""event loop and entry point"""
-
+"""application entry point"""
 import curses
 import logging
 import os
@@ -21,9 +20,8 @@ def draw(canvas):
     """create anumations coroutines and run event loop"""
     coroutines.extend(get_stars_coroutines(canvas))
     ship = Ship.factory(*get_canvas_center(canvas))
-    coroutines.append(ship.animate())
+    ship.start(canvas)
     coroutines.append(handle_inputs(canvas, ship))
-    coroutines.append(ship.check_collision(canvas))
     coroutines.append(fill_space_with_obstacles(canvas))
     loop.run(canvas, coroutines)
 

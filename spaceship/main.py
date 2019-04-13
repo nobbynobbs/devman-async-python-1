@@ -12,7 +12,9 @@ import random
 import uuid
 
 from animations import blink, fire, fly_garbage
-from constants import SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS, BASE_DIR, LOG_LEVEL, DEBUG
+from constants import (
+    SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS, BASE_DIR, LOG_LEVEL, DEBUG
+)
 from curses_tools import draw_frame, get_frame_size
 from state import coroutines, obstacles
 from obstacles import Obstacle, show_obstacles
@@ -187,7 +189,9 @@ def run_loop(canvas):
 
 def main():
     """prepare canvas and use the draw function"""
-    logging.basicConfig(filename=os.path.join(BASE_DIR, '../spaceship.log'), level=LOG_LEVEL)
+    logging.basicConfig(
+        filename=os.path.join(BASE_DIR, '../spaceship.log'), level=LOG_LEVEL
+    )
 
     try:
         screen = curses.initscr()

@@ -1,159 +1,64 @@
 #!/usr/bin/env python3
 
-"""event loop and entry point"""
+"""application entry point"""
 
+import asyncio
 import curses
-import itertools
-import time
-import random
+import logging
+import os
 
-from curses_tools import draw_frame, get_frame_size
-
-from animations import blink, fire
-from constants import SPACESHIP_FRAMES_DIR, TIC_TIMEOUT, STARS
-from utils import (
-    sleep,
-    read_frames,
-    get_random_coordinates_list,
-    get_canvas_center,
-    handle_inputs,
-)
-
-
-class Position:
-    """point on screen"""
-
-    def __init__(self, row, column):
-        self.row = row
-        self.column = column
-
-    def move(self, row_direction, column_direction):
-        """shift position"""
-        self.row += row_direction
-        self.column += column_direction
-
-    def position(self):
-        "return current row and column"
-        return self.row, self.column
-
-
-class Ship:
-    """Define spaceship properties and behaviour"""
-
-    ALLOWED_DIRECTIONS = {-1, 0, 1}
-
-    def __init__(self, position, frames):
-        self.position = position
-        self.frames = frames
-        self.current_frame = None
-
-    async def render(self, canvas):
-        """async render"""
-        for frame in itertools.cycle(self.frames):
-            self.current_frame = frame
-            draw_frame(canvas, self.position.row, self.position.column, frame)
-            await sleep(0.1)
-            draw_frame(
-                canvas, self.position.row, self.position.column, frame, negative=True
-            )
-
-    def move(self, row_direction, column_direction, canvas):
-        """change ship position"""
-        if not all(
-            [
-                self._direction_value_is_alowed(row_direction),
-                self._direction_value_is_alowed(column_direction),
-            ]
-        ):
-            raise ValueError(
-                "Both direction values must be from set {}, ({}, {}) passed".format(
-                    self.ALLOWED_DIRECTIONS, row_direction, column_direction
-                )
-            )
-
-        if row_direction == 0 and column_direction == 0:
-            return
-        if self.can_move(canvas, row_direction, column_direction):
-            draw_frame(
-                canvas,
-                self.position.row,
-                self.position.column,
-                self.current_frame,
-                negative=True,
-            )
-            self.position.move(row_direction, column_direction)
-            draw_frame(
-                canvas, self.position.row, self.position.column, self.current_frame
-            )
-
-    @classmethod
-    def _direction_value_is_alowed(cls, direction):
-        """check if direction value is allowed"""
-        return direction in cls.ALLOWED_DIRECTIONS
-
-    @property
-    def size(self):
-        """return size of rendered frame"""
-        if self.current_frame is None:
-            return 0, 0
-        return get_frame_size(self.current_frame)
-
-    def can_move(self, canvas, row_direction, column_direction):
-        """check if ship reached the canvas border"""
-        border_width = 1
-        frame_height, frame_width = self.size
-        canvas_height, canvas_width = canvas.getmaxyx()
-        return not any(
-            [
-                self.position.column <= border_width and column_direction < 0,
-                self.position.row <= border_width and row_direction < 0,
-                self.position.row + frame_height >= canvas_height - border_width
-                and row_direction > 0,
-                self.position.column + frame_width >= canvas_width - border_width
-                and column_direction > 0,
-            ]
-        )
-
-    @classmethod
-    def factory(cls, row, col):
-        """create new ship instance"""
-        frames = read_frames(SPACESHIP_FRAMES_DIR)
-        return Ship(Position(row, col), frames)
+from core.constants import BASE_DIR, GAMEOVER_FRAME
+import core.loop as loop
+from curses_tools import get_canvas_center, read_controls, get_justify_offset
+from settings import LOG_LEVEL, SPACE_ERA_BEGINNING
+from state import coroutines, obstacles
+from objects.frame import Frame
+from objects.ship import new_ship
+from objects.stars import get_stars_coroutines
+from objects.obstacles import fill_space_with_obstacles
+from objects.timeline import Timeline, show as show_timeline
 
 
 def draw(canvas):
-    """create anumations coroutines and run event loop"""
-    coroutines = [
-        blink(canvas, row, column, random.choice(STARS), random.randint(0, 1))
-        for row, column in get_random_coordinates_list(canvas)
-    ]
-    fire_coro = fire(canvas, *get_canvas_center(canvas))
-    coroutines.append(fire_coro)
-    ship = Ship.factory(*get_canvas_center(canvas))
-    coroutines.append(ship.render(canvas))
-    coroutines.append(handle_inputs(ship, canvas))
-    run_loop(coroutines, canvas)
+    """create animations coroutines and run event loop"""
+    coroutines.extend(get_stars_coroutines(canvas))
+    timeline = Timeline(year=SPACE_ERA_BEGINNING)
+    coroutines.extend([timeline.run(), show_timeline(canvas, timeline)])
+    ship = new_ship(canvas, *get_canvas_center(canvas))
+    ship.start()
+    coroutines.append(handle_inputs(canvas, ship))
+    coroutines.append(fill_space_with_obstacles(canvas, timeline))
+    loop.run(canvas, coroutines)
 
 
-def run_loop(coroutines, canvas):
-    """invoke coroutines, collect exhausted coroutines"""
-    while coroutines:
-        # is it ok to allocate new set on each iteration?
-        finished_coroutines = set()
-        for coro in coroutines:
-            try:
-                coro.send(None)
-            except StopIteration:
-                finished_coroutines.add(coro)
-        canvas.refresh()
-        for coro in finished_coroutines:
-            coroutines.remove(coro)
-        time.sleep(TIC_TIMEOUT)  # limit event-loop frequency
-        canvas.border()
+async def handle_inputs(canvas, ship):
+    """async wrapper for controls handler"""
+    gameover = Frame(
+        canvas, GAMEOVER_FRAME, *get_justify_offset(canvas, GAMEOVER_FRAME)
+    )
+    while True:
+        row, column, shoot = read_controls(canvas)  # non-blocking
+        if not ship.destroyed:
+            gameover.hide()
+            await ship.move(row, column)
+            if shoot:
+                ship.shoot()
+        else:
+            gameover.show()
+            if shoot:
+                for obstacle in obstacles:
+                    obstacle.destroyed = True
+                    await asyncio.sleep(0)
+                    exit(0)
+            await asyncio.sleep(0)
 
 
 def main():
     """prepare canvas and use the draw function"""
+    logging.basicConfig(
+        filename=os.path.join(BASE_DIR, "../spaceship.log"), level=LOG_LEVEL
+    )
+
     try:
         screen = curses.initscr()
         curses.start_color()

@@ -8,6 +8,12 @@ UP_KEY_CODE = 259
 DOWN_KEY_CODE = 258
 
 
+def get_canvas_center(canvas):
+    """return tuple `(row, column)`"""
+    height, width = canvas.getmaxyx()
+    return height // 2, width // 2
+
+
 def read_controls(canvas):
     """Read keys pressed and returns tuple witl controls state."""
 
@@ -59,14 +65,33 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
             if column >= columns_number:
                 break
 
+            if symbol == " ":
+                continue
+
+            # Check if current position it is not in a lower right corner of the window
+            # Curses will raise exception in that case. Don`t ask why…
+            # https://docs.python.org/3/library/curses.html#curses.window.addch
+            if row == rows_number - 1 and column == columns_number - 1:
+                continue
+
             symbol = symbol if not negative else " "
             canvas.addch(row, column, symbol)
 
 
 def get_frame_size(text):
-    """Calculate size of multiline text fragment. Returns pair (rows number, colums number)"""
+    """Calculate size of multiline text fragment.
+    Returns pair (rows number, colums number)"""
 
     lines = text.splitlines()
     rows = len(lines)
     columns = max([len(line) for line in lines])
     return rows, columns
+
+
+def get_justify_offset(canvas, frame):
+    """calc offsets to draw frame in the middle of canvas"""
+    canvas_rows, canvas_columns = canvas.getmaxyx()
+    size_rows, size_columns = get_frame_size(frame)
+    row = (canvas_rows - size_rows) // 2
+    column = (canvas_columns - size_columns) // 2
+    return row, column

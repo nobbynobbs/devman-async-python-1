@@ -1,9 +1,11 @@
-"""async animation functions"""
+"""common (reusable) async animation functions"""
 
 import asyncio
 import curses
 
-from utils import sleep
+from core.constants import EXPLOSION_FRAMES
+from curses_tools import draw_frame, get_frame_size
+from state import obstacles
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
@@ -32,22 +34,25 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
         canvas.addstr(round(row), round(column), symbol)
         await asyncio.sleep(0)
         canvas.addstr(round(row), round(column), " ")
+        for obstacle in obstacles:
+            if obstacle.has_collision(row, column):
+                obstacle.destroyed = True
+                return
         row += rows_speed
         column += columns_speed
 
 
-async def blink(canvas, row, column, symbol="*", delay=0):
-    """display twinkle twinkle little star"""
-    await sleep(delay)
-    while True:
-        canvas.addstr(row, column, symbol, curses.A_DIM)
-        await sleep(2)
+async def explode(canvas, center_row, center_column):
+    """exlplosion animation"""
+    rows, columns = get_frame_size(EXPLOSION_FRAMES[0])
+    corner_row = center_row - rows / 2
+    corner_column = center_column - columns / 2
 
-        canvas.addstr(row, column, symbol)
-        await sleep(0.3)
+    curses.beep()
+    for frame in EXPLOSION_FRAMES:
 
-        canvas.addstr(row, column, symbol, curses.A_BOLD)
-        await sleep(0.5)
+        draw_frame(canvas, corner_row, corner_column, frame)
 
-        canvas.addstr(row, column, symbol)
-        await sleep(0.3)
+        await asyncio.sleep(0)
+        draw_frame(canvas, corner_row, corner_column, frame, negative=True)
+        await asyncio.sleep(0)

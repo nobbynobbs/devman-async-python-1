@@ -1,29 +1,13 @@
 """utils and helpers"""
 
-import asyncio
 import os
 import random
-
-from constants import TIC_TIMEOUT
-from curses_tools import read_controls
-
-
-async def sleep(seconds):
-    """asyncio.sleep(0) wrapper"""
-    for _ in range(int(seconds // TIC_TIMEOUT)):
-        await asyncio.sleep(0)
-
-
-def get_canvas_center(canvas):
-    """return tuple `(row, column)`"""
-    height, width = canvas.getmaxyx()
-    return height // 2, width // 2
 
 
 def read_frames(frames_dir):
     """read all frame files from directory into list of strings"""
     frames = []
-    for filename in os.listdir(frames_dir):
+    for filename in sorted(os.listdir(frames_dir)):
         with open(os.path.join(frames_dir, filename)) as f_d:
             frames.append(f_d.read())
     return frames
@@ -39,9 +23,6 @@ def get_random_coordinates_list(canvas, low=50, high=100):
     ]
 
 
-async def handle_inputs(ship, canvas):
-    """async wrapper for controls handler"""
-    while True:
-        row, column, _ = read_controls(canvas)  # non-blocking
-        ship.move(row, column, canvas)
-        await asyncio.sleep(0)
+def rand(left, right):
+    """random number from interval [left, right]"""
+    return left + (random.random() * (right - left))

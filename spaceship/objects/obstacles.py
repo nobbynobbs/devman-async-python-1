@@ -4,6 +4,7 @@ import asyncio
 import logging
 import random
 
+from objects.frame import Frame
 from core.animations import explode
 from core import loop
 from core.constants import OBSTACLES_FRAMES
@@ -13,20 +14,12 @@ from state import obstacles, coroutines
 from utils import rand
 
 
-class Obstacle():
+class Obstacle(Frame):
     """cosmic garbage"""
 
-    def __init__(self, row, column, rows_size=1, columns_size=1):
-        self.row = row
-        self.column = column
-        self.rows_size = rows_size
-        self.columns_size = columns_size
+    def __init__(self, canvas, frame, row, column):
+        super().__init__(canvas, frame, row, column)
         self.destroyed = False
-
-    @property
-    def center(self):
-        """coordinates of center"""
-        return self.row + self.rows_size // 2, self.column + self.columns_size // 2
 
     def get_bounding_box_frame(self):
         """increment box size to compensate obstacle movement"""
@@ -53,21 +46,21 @@ class Obstacle():
             (obj_size_rows, obj_size_columns),
         )
 
-    async def fly(self, canvas, garbage_frame, speed=0.5):
+    async def fly(self, speed=0.5):
         """Animate garbage, flying from top to bottom.
         Сolumn position will stay same, as specified on start."""
-        rows_number, columns_number = canvas.getmaxyx()
+        rows_number, columns_number = self.canvas.getmaxyx()
 
         column = max(self.column, 0)
         column = min(column, columns_number - 1)
 
         while self.row < rows_number:
-            draw_frame(canvas, self.row, column, garbage_frame)
+            self.show()
             await asyncio.sleep(0)
-            draw_frame(canvas, self.row, column, garbage_frame, negative=True)
+            self.hide()
             if self.destroyed:
                 obstacles.remove(self)
-                await explode(canvas, *self.center)
+                await explode(self.canvas, *self.center)
                 return
             self.row += speed
         obstacles.remove(self)
@@ -139,11 +132,11 @@ async def fill_space_with_obstacles(canvas):
     while True:
         await loop.sleep(random.random() * 2)  # sleep [0, 2] seconds
         frame = random.choice(OBSTACLES_FRAMES)
-        frame_height, frame_width = get_frame_size(frame)
+        _, frame_width = get_frame_size(frame)
         column = random.randint(1, canvas_width - frame_width - 1)
-        obstacle = Obstacle(0, column, frame_height, frame_width)
+        obstacle = Obstacle(canvas, frame, 0, column)
         obstacles.append(obstacle)
-        coroutines.append(obstacle.fly(canvas, frame, _get_random_speed()))
+        coroutines.append(obstacle.fly(_get_random_speed()))
         logging.debug("Obstacles count: %d", len(obstacles))
 
 

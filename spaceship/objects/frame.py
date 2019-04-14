@@ -5,6 +5,7 @@ from curses_tools import get_frame_size, draw_frame
 
 class Frame:
     """frame wrapper"""
+
     def __init__(self, canvas, frame, row, column):
         self.canvas = canvas
         self.frame = frame
@@ -21,7 +22,6 @@ class Frame:
     def center(self):
         """coordinates of center"""
         return self.row + self.rows_size // 2, self.column + self.columns_size // 2
-
 
     def show(self, row=None, column=None):
         """show frame on canvas

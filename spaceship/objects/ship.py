@@ -7,7 +7,6 @@ from core.animations import explode as animate_explosion, fire
 from core.constants import SPACESHIP_FRAMES
 from core.loop import sleep
 from core.physics import update_speed
-from curses_tools import get_frame_size, draw_frame
 from objects.frame import Frame
 from state import coroutines, obstacles
 
@@ -24,9 +23,7 @@ class Ship:
         self.current_frame = None
         self.previous_frame = None
         self.destroyed = False
-        self.frames = itertools.cycle([
-            Frame(canvas, frame, 0, 0) for frame in frames
-        ])
+        self.frames = itertools.cycle([Frame(canvas, frame, 0, 0) for frame in frames])
 
     def start(self):
         """add infinite ship's coroutines into event loop"""
@@ -62,7 +59,9 @@ class Ship:
         negative_frame.hide(self.row, self.column)
 
         self.update_speed(row_direction, column_direction)
-        logging.debug("row speed: %.3f, column speed: %.3f", self.row_speed, self.column_speed)
+        logging.debug(
+            "row speed: %.3f, column speed: %.3f", self.row_speed, self.column_speed
+        )
         if (
             self.column - self.column_speed <= border_width + 1
             and column_direction <= 0
@@ -71,8 +70,7 @@ class Ship:
             self.column_speed = 0
 
         if (
-            self.column + frame_width + self.column_speed
-            >= canvas_width - border_width
+            self.column + frame_width + self.column_speed >= canvas_width - border_width
             and column_direction >= 0
         ):
             self.column = canvas_width - frame_width - border_width - 1
@@ -83,8 +81,7 @@ class Ship:
             self.row_speed = 0
 
         if (
-            self.row + frame_height + self.row_speed
-            >= canvas_height - border_width
+            self.row + frame_height + self.row_speed >= canvas_height - border_width
             and row_direction >= 0
         ):
             self.row = canvas_height - border_width - 1 - frame_height
@@ -109,7 +106,11 @@ class Ship:
     def shoot(self):
         """create lasergun shot"""
         coroutines.append(
-            fire(self.canvas, self.row, self.column + self.current_frame.columns_size // 2)
+            fire(
+                self.canvas,
+                self.row,
+                self.column + self.current_frame.columns_size // 2,
+            )
         )
 
     async def check_collision(self):

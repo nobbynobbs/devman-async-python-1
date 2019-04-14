@@ -9,7 +9,13 @@ from core.animations import explode
 from core import loop
 from core.constants import OBSTACLES_FRAMES
 from curses_tools import draw_frame, get_frame_size
-from settings import DEBUG, MIN_OBSTACLES_SPEED, MAX_OBSTACLES_SPEED
+from settings import (
+    DEBUG,
+    MIN_OBSTACLES_SPEED,
+    MAX_OBSTACLES_SPEED,
+    SPACE_ERA_BEGINNING,
+    YEAR_IN_SECONDS,
+)
 from state import obstacles, coroutines
 from utils import rand
 
@@ -124,13 +130,18 @@ def has_collision(obstacle_corner, obstacle_size, obj_corner, obj_size=(1, 1)):
     )
 
 
-async def fill_space_with_obstacles(canvas):
+async def fill_space_with_obstacles(canvas, timeline):
     """generates infinite obstacles flow"""
     _, canvas_width = canvas.getmaxyx()
     if DEBUG:
         coroutines.append(show_obstacles(canvas))
     while True:
-        await loop.sleep(random.random() * 2)  # sleep [0, 2] seconds
+        try:
+            sleeping_time = YEAR_IN_SECONDS / (timeline.year - SPACE_ERA_BEGINNING)
+        except ZeroDivisionError:
+            sleeping_time = YEAR_IN_SECONDS
+
+        await loop.sleep(sleeping_time)  # sleep [0, 2] seconds
         frame = random.choice(OBSTACLES_FRAMES)
         _, frame_width = get_frame_size(frame)
         column = random.randint(1, canvas_width - frame_width - 1)

@@ -86,3 +86,12 @@ def get_frame_size(text):
     rows = len(lines)
     columns = max([len(line) for line in lines])
     return rows, columns
+
+
+def get_justify_offset(canvas, frame):
+    """calc offsets to draw frame in the middle of canvas"""
+    canvas_rows, canvas_columns = canvas.getmaxyx()
+    size_rows, size_columns = get_frame_size(frame)
+    row = (canvas_rows - size_rows) // 2
+    column = (canvas_columns - size_columns) // 2
+    return row, column

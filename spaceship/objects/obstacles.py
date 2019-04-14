@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import random
-import uuid
 
 from core.animations import explode
 from core import loop
@@ -14,15 +13,14 @@ from state import obstacles, coroutines
 from utils import rand
 
 
-class Obstacle:
+class Obstacle():
     """cosmic garbage"""
 
-    def __init__(self, row, column, rows_size=1, columns_size=1, uid=None):
+    def __init__(self, row, column, rows_size=1, columns_size=1):
         self.row = row
         self.column = column
         self.rows_size = rows_size
         self.columns_size = columns_size
-        self.uid = uid
         self.destroyed = False
 
     @property
@@ -143,7 +141,7 @@ async def fill_space_with_obstacles(canvas):
         frame = random.choice(OBSTACLES_FRAMES)
         frame_height, frame_width = get_frame_size(frame)
         column = random.randint(1, canvas_width - frame_width - 1)
-        obstacle = Obstacle(0, column, frame_height, frame_width, uid=uuid.uuid4())
+        obstacle = Obstacle(0, column, frame_height, frame_width)
         obstacles.append(obstacle)
         coroutines.append(obstacle.fly(canvas, frame, _get_random_speed()))
         logging.debug("Obstacles count: %d", len(obstacles))

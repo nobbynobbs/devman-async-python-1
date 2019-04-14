@@ -7,12 +7,12 @@ import curses
 import logging
 import os
 
-from core.constants import BASE_DIR
+from core.constants import BASE_DIR, GAMEOVER_FRAME
 import core.loop as loop
-from curses_tools import get_canvas_center, read_controls
+from curses_tools import get_canvas_center, read_controls, get_justify_offset
 from settings import LOG_LEVEL
 from state import coroutines, obstacles
-from objects.gameover import GameOver
+from objects.frame import Frame
 from objects.ship import Ship
 from objects.stars import get_stars_coroutines
 from objects.obstacles import fill_space_with_obstacles
@@ -30,7 +30,9 @@ def draw(canvas):
 
 async def handle_inputs(canvas, ship):
     """async wrapper for controls handler"""
-    gameover = GameOver(canvas)
+    gameover = Frame(
+        canvas, GAMEOVER_FRAME, *get_justify_offset(canvas, GAMEOVER_FRAME)
+    )
     while True:
         row, column, shoot = read_controls(canvas)  # non-blocking
         if not ship.destroyed:

@@ -7,7 +7,7 @@ import random
 def read_frames(frames_dir):
     """read all frame files from directory into list of strings"""
     frames = []
-    for filename in os.listdir(frames_dir):
+    for filename in sorted(os.listdir(frames_dir)):
         with open(os.path.join(frames_dir, filename)) as f_d:
             frames.append(f_d.read())
     return frames

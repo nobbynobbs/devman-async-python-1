@@ -22,10 +22,19 @@ class Frame:
         """coordinates of center"""
         return self.row + self.rows_size // 2, self.column + self.columns_size // 2
 
-    def show(self):
-        """show frame on canvas"""
-        draw_frame(self.canvas, self.row, self.column, self.frame)
 
-    def hide(self):
-        """hide frame from canvas"""
-        draw_frame(self.canvas, self.row, self.column, self.frame, negative=True)
+    def show(self, row=None, column=None):
+        """show frame on canvas
+        we can override row and column attributes
+        """
+        row = row or self.row
+        column = column or self.column
+        draw_frame(self.canvas, row, column, self.frame)
+
+    def hide(self, row=None, column=None):
+        """hide frame from canvas
+        we can override row and column attributes
+        """
+        row = row or self.row
+        column = column or self.column
+        draw_frame(self.canvas, row, column, self.frame, negative=True)

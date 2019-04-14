@@ -13,7 +13,7 @@ from curses_tools import get_canvas_center, read_controls, get_justify_offset
 from settings import LOG_LEVEL
 from state import coroutines, obstacles
 from objects.frame import Frame
-from objects.ship import Ship
+from objects.ship import new_ship
 from objects.stars import get_stars_coroutines
 from objects.obstacles import fill_space_with_obstacles
 
@@ -21,8 +21,8 @@ from objects.obstacles import fill_space_with_obstacles
 def draw(canvas):
     """create animations coroutines and run event loop"""
     coroutines.extend(get_stars_coroutines(canvas))
-    ship = Ship.factory(*get_canvas_center(canvas))
-    ship.start(canvas)
+    ship = new_ship(canvas, *get_canvas_center(canvas))
+    ship.start()
     coroutines.append(handle_inputs(canvas, ship))
     coroutines.append(fill_space_with_obstacles(canvas))
     loop.run(canvas, coroutines)
@@ -37,9 +37,9 @@ async def handle_inputs(canvas, ship):
         row, column, shoot = read_controls(canvas)  # non-blocking
         if not ship.destroyed:
             gameover.hide()
-            await ship.move(canvas, row, column)
+            await ship.move(row, column)
             if shoot:
-                ship.shoot(canvas)
+                ship.shoot()
         else:
             gameover.show()
             if shoot:

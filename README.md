@@ -6,7 +6,7 @@ Lesson 1 of devman's async-python module
 
 ## Requirements
 
-- python36
+- python37
 
 ## Launch the game
 

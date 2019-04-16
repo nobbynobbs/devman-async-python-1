@@ -15,7 +15,7 @@ class Frame:
 
     @property
     def size(self):
-        """return tuple size_rows, size_columns"""
+        """return tuple rows_size, columns_size"""
         return self.rows_size, self.columns_size
 
     @property
@@ -27,14 +27,23 @@ class Frame:
         """show frame on canvas
         we can override row and column attributes
         """
-        row = row or self.row
-        column = column or self.column
+        row, column = self._override_row_and_column(row, column)
         draw_frame(self.canvas, row, column, self.frame)
 
     def hide(self, row=None, column=None):
         """hide frame from canvas
         we can override row and column attributes
         """
-        row = row or self.row
-        column = column or self.column
+        row, column = self._override_row_and_column(row, column)
         draw_frame(self.canvas, row, column, self.frame, negative=True)
+
+    def _override_attribute_value(self, attribute, value):
+        """"""
+        if value is None:
+            return getattr(self, attribute)
+        return value
+
+    def _override_row_and_column(self, row, column):
+        row = self._override_attribute_value("row", row)
+        column = self._override_attribute_value("column", column)
+        return row, column

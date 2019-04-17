@@ -5,9 +5,7 @@ import logging
 import random
 
 from objects.frame import Frame
-from core.animations import explode
 from core import loop
-from core.constants import OBSTACLES_FRAMES
 from curses_tools import draw_frame, get_frame_size
 from settings import (
     DEBUG,
@@ -23,8 +21,9 @@ from utils import rand
 class Obstacle(Frame):
     """cosmic garbage"""
 
-    def __init__(self, canvas, frame, row, column):
+    def __init__(self, canvas, frame, row, column, explosion):
         super().__init__(canvas, frame, row, column)
+        self.explosion = explosion
         self.destroyed = False
 
     def get_bounding_box_frame(self):
@@ -66,7 +65,7 @@ class Obstacle(Frame):
             self.hide()
             if self.destroyed:
                 obstacles.remove(self)
-                await explode(self.canvas, *self.center)
+                await self.explosion.explode(*self.center)
                 return
             self.row += speed
         obstacles.remove(self)
@@ -130,8 +129,8 @@ def has_collision(obstacle_corner, obstacle_size, obj_corner, obj_size=(1, 1)):
     )
 
 
-async def fill_space_with_obstacles(canvas, timeline):
-    """generates infinite obstacles flow"""
+async def fill_space_with_garbage(canvas, timeline, frames, explosion):
+    """generates infinite garbage flow"""
     _, canvas_width = canvas.getmaxyx()
     if DEBUG:
         coroutines.append(show_obstacles(canvas))
@@ -141,11 +140,11 @@ async def fill_space_with_obstacles(canvas, timeline):
         except ZeroDivisionError:
             sleeping_time = YEAR_IN_SECONDS
 
-        await loop.sleep(sleeping_time)  # sleep [0, 2] seconds
-        frame = random.choice(OBSTACLES_FRAMES)
+        await loop.sleep(sleeping_time)
+        frame = random.choice(frames)
         _, frame_width = get_frame_size(frame)
         column = random.randint(1, canvas_width - frame_width - 1)
-        obstacle = Obstacle(canvas, frame, 0, column)
+        obstacle = Obstacle(canvas, frame, 0, column, explosion)
         obstacles.append(obstacle)
         coroutines.append(obstacle.fly(_get_random_speed()))
         logging.debug("Obstacles count: %d", len(obstacles))

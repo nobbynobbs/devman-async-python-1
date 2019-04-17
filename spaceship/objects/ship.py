@@ -3,8 +3,7 @@
 import itertools
 import logging
 
-from core.animations import explode as animate_explosion, fire
-from core.constants import SPACESHIP_FRAMES
+from core.animations import fire
 from core.loop import sleep
 from core.physics import update_speed
 from objects.frame import Frame
@@ -14,10 +13,11 @@ from state import coroutines, obstacles
 class Ship:
     """Define spaceship properties and behaviour"""
 
-    def __init__(self, canvas, frames, row, column):
+    def __init__(self, canvas, row, column, frames, explosion):
         self.canvas = canvas
         self.row = row
         self.column = column
+        self.explosion = explosion
         self.row_speed = 0
         self.column_speed = 0
         self.current_frame = None
@@ -99,8 +99,8 @@ class Ship:
         negative_frame = self.previous_frame or self.current_frame
         negative_frame.hide(self.row, self.column)
         height, width = self.size
-        await animate_explosion(
-            self.canvas, self.row + height // 2, self.column + width // 2
+        await self.explosion.explode(
+            self.row + height // 2, self.column + width // 2
         )
 
     def shoot(self):
@@ -125,6 +125,6 @@ class Ship:
             await sleep(0)
 
 
-def new_ship(canvas, row, column):
+def new_ship(canvas, row, column, frames, explosion):
     """create new ship instance"""
-    return Ship(canvas, SPACESHIP_FRAMES, row, column)
+    return Ship(canvas, row, column, frames, explosion)

@@ -9,6 +9,7 @@ TEST_CASES = [
     ((1, 3), (1, 3)),
 ]
 
+
 @pytest.mark.parametrize("row_column,expected", TEST_CASES)
 def test_override(row_column, expected):
     frame_instance = frame.Frame(None, " ", 2, 2)

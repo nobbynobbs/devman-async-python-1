@@ -4,11 +4,10 @@ import asyncio
 import logging
 import random
 
-from objects.frame import Frame
 from core import loop
-from curses_tools import draw_frame, get_frame_size
+from curses_tools import draw_frame
+from objects import garbage, frame as mframe
 from settings import (
-    DEBUG,
     MIN_OBSTACLES_SPEED,
     MAX_OBSTACLES_SPEED,
     SPACE_ERA_BEGINNING,
@@ -18,13 +17,35 @@ from state import obstacles, coroutines
 from utils import rand
 
 
-class Obstacle(Frame):
+class Obstacle():
     """cosmic garbage"""
 
-    def __init__(self, canvas, frame, row, column, explosion):
-        super().__init__(canvas, frame, row, column)
-        self.explosion = explosion
-        self.destroyed = False
+    def __init__(self, obstacle):
+        self.obstacle = obstacle
+
+    @property
+    def destroyed(self):
+        return self.obstacle.destroyed
+
+    @destroyed.setter
+    def destroyed(self, value):
+        self.obstacle.destroyed = value
+
+    @property
+    def rows_size(self):
+        return self.obstacle.rows_size
+
+    @property
+    def columns_size(self):
+        return self.obstacle.columns_size
+
+    @property
+    def row(self):
+        return self.obstacle.row
+
+    @property
+    def column(self):
+        return self.obstacle.column
 
     def get_bounding_box_frame(self):
         """increment box size to compensate obstacle movement"""
@@ -51,25 +72,6 @@ class Obstacle(Frame):
             (obj_size_rows, obj_size_columns),
         )
 
-    async def fly(self, speed=0.5):
-        """Animate garbage, flying from top to bottom.
-        Сolumn position will stay same, as specified on start."""
-        rows_number, columns_number = self.canvas.getmaxyx()
-
-        column = max(self.column, 0)
-        column = min(column, columns_number - 1)
-
-        while self.row < rows_number:
-            self.show()
-            await asyncio.sleep(0)
-            self.hide()
-            if self.destroyed:
-                obstacles.remove(self)
-                await self.explosion.explode(*self.center)
-                return
-            self.row += speed
-        obstacles.remove(self)
-
 
 def _get_bounding_box_lines(rows, columns):
     """yield bounding box line by line"""
@@ -84,6 +86,9 @@ async def show_obstacles(canvas):
 
     while True:
         boxes = []
+        dead_obstacles = [obstacle for obstacle in obstacles if obstacle.destroyed]
+        for obstacle in dead_obstacles:
+            obstacles.remove(obstacle)
 
         for obstacle in obstacles:
             boxes.append(obstacle.dump_bounding_box())
@@ -132,8 +137,6 @@ def has_collision(obstacle_corner, obstacle_size, obj_corner, obj_size=(1, 1)):
 async def fill_space_with_garbage(canvas, timeline, frames, explosion):
     """generates infinite garbage flow"""
     _, canvas_width = canvas.getmaxyx()
-    if DEBUG:
-        coroutines.append(show_obstacles(canvas))
     while True:
         try:
             sleeping_time = YEAR_IN_SECONDS / (timeline.year - SPACE_ERA_BEGINNING)
@@ -141,12 +144,13 @@ async def fill_space_with_garbage(canvas, timeline, frames, explosion):
             sleeping_time = YEAR_IN_SECONDS
 
         await loop.sleep(sleeping_time)
-        frame = random.choice(frames)
-        _, frame_width = get_frame_size(frame)
-        column = random.randint(1, canvas_width - frame_width - 1)
-        obstacle = Obstacle(canvas, frame, 0, column, explosion)
+        raw_frame = random.choice(frames)
+        frame = mframe.Frame(canvas, raw_frame, None, None)
+        column = random.randint(1, canvas_width - frame.columns_size - 1)
+        garbage_instance = garbage.Garbage(canvas, 0, column, frame, explosion)
+        obstacle = Obstacle(garbage_instance)
         obstacles.append(obstacle)
-        coroutines.append(obstacle.fly(_get_random_speed()))
+        coroutines.append(garbage_instance.fly(_get_random_speed()))
         logging.debug("Obstacles count: %d", len(obstacles))
 
 

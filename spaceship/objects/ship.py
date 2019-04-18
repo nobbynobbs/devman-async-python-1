@@ -47,6 +47,8 @@ class Ship:
         for frame in self.frames:
             self.current_frame = frame
             await sleep(0.1)
+            if self.destroyed:
+                return
 
     async def move(self, row_direction, column_direction):
         """change ship position"""
@@ -95,7 +97,7 @@ class Ship:
         await sleep(0)
 
     async def explode(self):
-        """animete ship destroying"""
+        """animate ship destroying"""
         negative_frame = self.previous_frame or self.current_frame
         negative_frame.hide(self.row, self.column)
         height, width = self.size

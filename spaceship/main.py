@@ -11,12 +11,12 @@ from core.animations import Explosion
 from core.constants import BASE_DIR
 import core.loop as loop
 from curses_tools import get_canvas_center, read_controls, get_justify_offset
-from settings import LOG_LEVEL, SPACE_ERA_BEGINNING
+from settings import LOG_LEVEL, SPACE_ERA_BEGINNING, DEBUG
 from state import coroutines, obstacles
 from objects.frame import Frame
 from objects.ship import new_ship
 from objects.stars import get_stars_coroutines
-from objects.obstacles import fill_space_with_garbage
+from objects.obstacles import fill_space_with_garbage, show_obstacles
 from objects.timeline import Timeline, show as show_timeline
 from utils import read_all_frames
 
@@ -29,6 +29,8 @@ def create_coroutines(canvas):
         logging.critical("could not read frames")
         exit(1)
 
+    if DEBUG:
+        coroutines.append(show_obstacles(canvas))
     explosion = Explosion(canvas, frames["explosion"])
     coroutines.extend(get_stars_coroutines(canvas))
     timeline = Timeline(year=SPACE_ERA_BEGINNING)

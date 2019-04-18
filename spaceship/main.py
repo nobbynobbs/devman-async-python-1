@@ -7,34 +7,52 @@ import curses
 import logging
 import os
 
-from core.constants import BASE_DIR, GAMEOVER_FRAME
+from core.animations import Explosion
+from core.constants import BASE_DIR
 import core.loop as loop
 from curses_tools import get_canvas_center, read_controls, get_justify_offset
-from settings import LOG_LEVEL, SPACE_ERA_BEGINNING
+from settings import LOG_LEVEL, SPACE_ERA_BEGINNING, DEBUG
 from state import coroutines, obstacles
 from objects.frame import Frame
 from objects.ship import new_ship
 from objects.stars import get_stars_coroutines
-from objects.obstacles import fill_space_with_obstacles
+from objects.obstacles import fill_space_with_garbage, show_obstacles
 from objects.timeline import Timeline, show as show_timeline
+from utils import read_all_frames
+
+
+def create_coroutines(canvas):
+    """create coroutines for execution"""
+    try:
+        frames = read_all_frames()
+    except IOError:
+        logging.critical("could not read frames")
+        exit(1)
+
+    if DEBUG:
+        coroutines.append(show_obstacles(canvas))
+    explosion = Explosion(canvas, frames["explosion"])
+    coroutines.extend(get_stars_coroutines(canvas))
+    timeline = Timeline(year=SPACE_ERA_BEGINNING)
+    coroutines.extend([timeline.run(), show_timeline(canvas, timeline)])
+    ship = new_ship(canvas, *get_canvas_center(canvas), frames["spaceship"], explosion)
+    ship.start()
+    coroutines.append(handle_inputs(canvas, ship, frames))
+    coroutines.append(
+        fill_space_with_garbage(canvas, timeline, frames["garbage"], explosion)
+    )
 
 
 def draw(canvas):
     """create animations coroutines and run event loop"""
-    coroutines.extend(get_stars_coroutines(canvas))
-    timeline = Timeline(year=SPACE_ERA_BEGINNING)
-    coroutines.extend([timeline.run(), show_timeline(canvas, timeline)])
-    ship = new_ship(canvas, *get_canvas_center(canvas))
-    ship.start()
-    coroutines.append(handle_inputs(canvas, ship))
-    coroutines.append(fill_space_with_obstacles(canvas, timeline))
+    create_coroutines(canvas)
     loop.run(canvas, coroutines)
 
 
-async def handle_inputs(canvas, ship):
+async def handle_inputs(canvas, ship, frames):
     """async wrapper for controls handler"""
     gameover = Frame(
-        canvas, GAMEOVER_FRAME, *get_justify_offset(canvas, GAMEOVER_FRAME)
+        canvas, frames["gameover"], *get_justify_offset(canvas, frames["gameover"])
     )
     while True:
         row, column, shoot = read_controls(canvas)  # non-blocking
@@ -53,19 +71,23 @@ async def handle_inputs(canvas, ship):
             await asyncio.sleep(0)
 
 
+def init_curses():
+    """initialize curses"""
+    screen = curses.initscr()
+    curses.start_color()
+    screen.border()
+    screen.nodelay(True)
+    curses.update_lines_cols()
+    curses.curs_set(False)
+
+
 def main():
     """prepare canvas and use the draw function"""
     logging.basicConfig(
         filename=os.path.join(BASE_DIR, "../spaceship.log"), level=LOG_LEVEL
     )
-
+    init_curses()
     try:
-        screen = curses.initscr()
-        curses.start_color()
-        screen.border()
-        screen.nodelay(True)
-        curses.update_lines_cols()
-        curses.curs_set(False)
         curses.wrapper(draw)
     except KeyboardInterrupt:
         curses.endwin()

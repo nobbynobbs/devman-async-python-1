@@ -3,6 +3,25 @@
 import os
 import random
 
+from core.constants import (
+    SPACESHIP_FRAMES_DIR,
+    EXPLOSION_FRAMES_DIR,
+    GARBAGE_FRAMES_DIR,
+    BASE_DIR,
+)
+
+
+def read_all_frames():
+    """read frames from files"""
+    frames = {
+        "spaceship": read_frames(SPACESHIP_FRAMES_DIR),
+        "explosion": read_frames(EXPLOSION_FRAMES_DIR),
+        "garbage": read_frames(GARBAGE_FRAMES_DIR),
+    }
+    with open(os.path.join(BASE_DIR, "frames", "gameover.txt")) as f_d:
+        frames["gameover"] = f_d.read()
+    return frames
+
 
 def read_frames(frames_dir):
     """read all frame files from directory into list of strings"""

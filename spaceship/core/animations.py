@@ -3,8 +3,7 @@
 import asyncio
 import curses
 
-from core.constants import EXPLOSION_FRAMES
-from curses_tools import draw_frame, get_frame_size
+from objects import frame as mframe
 from state import obstacles
 
 
@@ -42,17 +41,22 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
         column += columns_speed
 
 
-async def explode(canvas, center_row, center_column):
-    """exlplosion animation"""
-    rows, columns = get_frame_size(EXPLOSION_FRAMES[0])
-    corner_row = center_row - rows / 2
-    corner_column = center_column - columns / 2
+class Explosion:
+    """wrapper for explosion animation"""
+    __slots__ = ("canvas", "frames")
 
-    curses.beep()
-    for frame in EXPLOSION_FRAMES:
+    def __init__(self, canvas, frames):
+        self.canvas = canvas
+        self.frames = [mframe.Frame(canvas, frame, None, None) for frame in frames]
 
-        draw_frame(canvas, corner_row, corner_column, frame)
-
-        await asyncio.sleep(0)
-        draw_frame(canvas, corner_row, corner_column, frame, negative=True)
-        await asyncio.sleep(0)
+    async def explode(self, center_row, center_column):
+        """exlplosion animation"""
+        rows, columns = self.frames[0].size
+        corner_row = center_row - rows / 2
+        corner_column = center_column - columns / 2
+        curses.beep()
+        for frame in self.frames:
+            frame.show(corner_row, corner_column)
+            await asyncio.sleep(0)
+            frame.hide(corner_row, corner_column)
+            await asyncio.sleep(0)
